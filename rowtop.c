@@ -3,14 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "util.h"
+
 struct RowTop* init_rowtop(size_t init_size)
 {
-  struct RowTop* rt = malloc(sizeof(struct RowTop));
-  rt->top = malloc(sizeof(char*) * init_size);
-  if (!rt->top) {
-    fprintf(stderr, "malloc error\n");
-    exit(-1);
-  }
+  struct RowTop* rt = xmalloc(sizeof(struct RowTop));
+  rt->top = xmalloc(sizeof(char*) * init_size);
   rt->size = 0;
   rt->cap = init_size;
   return rt;

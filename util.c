@@ -41,3 +41,12 @@ size_t get_file_size(const char* s)
   return (size_t)st.st_size;
 }
 
+void* xmalloc(size_t size)
+{
+  void* p = malloc(size);
+  if (!p) {
+    fprintf(stderr, "malloc error\n");
+    exit(-1);
+  }
+  return p;
+}
