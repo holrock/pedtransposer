@@ -17,78 +17,48 @@ struct Opt
   size_t buf_size;
 };
 
-static inline
-bool is_eos(char c)
-{
-  return (c == '\n' || c == '\r' || c == '\0');
-}
 
 static
-int count_column(const char* buf)
+size_t count_column(const char* buf)
 {
-  int ncol = 0;
-  while (!is_eos(*buf)) {
+  size_t ncol = 0;
+  while (*buf != '\0') {
     if (isblank(*buf)) {
         ++ncol;
-        if (ncol == N_COL_HEADER)
+        while (isblank(*buf)) {
+          ++buf;
+        }
+        if (ncol == N_COL_HEADER) {
           break;
+        }
+    } else {
+      ++buf;
     }
-    ++buf;
   }
 
-  int nspace = 0;
-  int ntab = 0;
-  while (!is_eos(*buf)) {
-    if (*buf == ' ')
+  size_t nspace = 0;
+  size_t ntab = 0;
+  while (*buf != '\0') {
+    if (*buf == ' ') {
       ++nspace;
-    else if (*buf == '\t')
+      while (*buf == ' ') {
+        ++buf;
+      }
+    } else if (*buf == '\t') {
         ++ntab;
-    ++buf;
+        while (*buf == '\t') {
+          ++buf;
+        }
+    } else {
+      ++buf;
+    }
   }
      
   if (nspace == 0)
     return ncol + 1;
   if (ntab != 0)
     return ncol + ntab + 1;
-  return ncol + (nspace / 2 + 1) + 1;
-}
-
-static
-void put_col_header(char* buf, FILE* out, char delim, int target_col, int ngeno_col)
-{
-  char* p = buf;
-  int col = 0;
-
-  while (*p != '\0') {
-    while (!is_eos(*p)) {
-      if (isblank(*p)) {
-        if (col == target_col)
-          fputc(delim, out);
-        ++col;
-      } else if (col == target_col) {
-        fputc(*p, out);
-      }
-
-      ++p;
-    }
-    col = 0;
-    ++p;
-  }
-  fputc('\n', out);
-}
-
-static
-void put_col_geno(char* buf, FILE* out, char delim, int target_col, int ngeno_col)
-{
-}
-
-static
-void put_col(char* buf, FILE* out, char delim, int target_col, int ngeno_col)
-{
-  if (target_col < N_COL_HEADER)
-    put_col_header(buf, out, delim, target_col, ngeno_col);
-  else
-    put_col_geno(buf, out, delim, target_col, ngeno_col);
+  return ncol + (nspace / 2 + 1);
 }
 
 static
@@ -99,12 +69,43 @@ void transpose(char* buf, struct RowTop* rt, FILE* out, char delim)
     return;
   }
 
-  const int ncol_header = 6; 
-  int ncol = count_column(buf);
-  int ngeno_col = ncol - ncol_header;
+  const size_t row_size = rt->size;
+  const size_t ncol = count_column(buf);
 
-  for (int cur_col = 0; cur_col < N_COL_HEADER; ++cur_col) {
-    put_col(buf, out, delim, cur_col, ngeno_col);
+  for (size_t cur_col = 0; cur_col < N_COL_HEADER; ++cur_col) {
+    for (size_t i = 0; i < row_size; ++i) {
+      char* p = rt->top[i];
+      size_t n = 0;
+      while (!isblank(*p)) {
+        ++p;
+        ++n;
+      }
+      fwrite(rt->top[i], sizeof(char), n, out);
+
+      while (isspace(*p)) {
+        ++p;
+      }
+      rt->top[i] = p;
+      if (i + 1 < row_size)
+        fputc(delim, out);
+    }
+    fputc('\n', out);
+  }
+
+  for (size_t cur_col = N_COL_HEADER; cur_col < ncol; ++cur_col) {
+    for (size_t i = 0; i < row_size; ++i) {
+      char* p = rt->top[i];
+      fwrite(p, sizeof(char), 3, out);
+      p += 4;
+      while (isspace(*p)) {
+        ++p;
+      }
+      rt->top[i] = p;
+
+      if (i + 1 < row_size)
+        fputc(delim, out);
+    }
+    fputc('\n', out);
   }
 }
 
@@ -112,7 +113,7 @@ static
 struct RowTop* prepare_buf(struct Buf* buf)
 {
   char* p = buf->data;
-  struct RowTop* rt = init_rowtop(10);
+  struct RowTop* rt = init_rowtop(10000);
   push_rowtop(rt, p);
 
   while (*p != '\0') {
@@ -143,8 +144,8 @@ int start_transpose(const char* file_name, struct Buf* buf)
       fclose(fp);
       return -1;
     }
-
     buf->data[n + 1] = '\0';
+
     struct RowTop* rt = prepare_buf(buf);
     transpose(buf->data, rt, stdout, '\t');
     free_rowtop(rt);
