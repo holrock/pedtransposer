@@ -19,6 +19,7 @@ CFLAGS = -std=c99 -g -Wall -Wextra -MMD -MP \
 
 LDFLAGS =
 INCLUDE =
+OPT = -O2
 
 all: $(TARGET)
 
@@ -26,7 +27,7 @@ $(TARGET): $(OBJS)
 		$(CC) -o $@ $^ $(LDFLAGS)
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
+	$(CC) $(CFLAGS) $(INCLUDE) $(OPT) -o $@ -c $<
 
 clean:
 		$(RM) -f $(OBJS) $(DEPS) $(TARGET)
