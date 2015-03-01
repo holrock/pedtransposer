@@ -31,4 +31,4 @@ $(TARGET): $(OBJS)
 clean:
 		$(RM) -f $(OBJS) $(DEPS) $(TARGET)
 
--include $(DPES)
+-include $(DEPS)
