@@ -4,12 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <errno.h>
-#include <limits.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "buf.h"
+#include "rowtop.h"
+#include "util.h"
 
 const int N_COL_HEADER = 6;
 
@@ -18,46 +16,6 @@ struct Opt
   const char* file_name;
   size_t buf_size;
 };
-
-struct Buf
-{
-  char* data;
-  size_t size;
-};
-
-
-static
-unsigned long xstrtoul(const char* s)
-{
-  char* endp = NULL;
-  errno = 0;
-  unsigned long val = strtoul(s, &endp, 10);
-  if ((errno == ERANGE && (val == ULONG_MAX || val == 0)) || (errno != 0 && val == 0)) {
-    perror("strtoul");
-    exit(-1);
-  }
-
-  if (endp == s) {
-    fprintf(stderr, "strtoul error: %s\n", s);
-    exit(-1);
-  }
-  return val;
-}
-
-static
-size_t get_file_size(const char* s)
-{
-  struct stat st = {};
-  if (stat(s, &st) == -1) {
-    perror("stat");
-    exit(-1);
-  }
-  if (st.st_size < 1) {
-    fprintf(stderr, "invalid file size\n");
-    exit(-1);
-  }
-  return (size_t)st.st_size;
-}
 
 static inline
 bool is_eos(char c)
@@ -134,7 +92,7 @@ void put_col(char* buf, FILE* out, char delim, int target_col, int ngeno_col)
 }
 
 static
-void transpose(char* buf, FILE* out, char delim)
+void transpose(char* buf, struct RowTop* rt, FILE* out, char delim)
 {
   if (!buf || buf[0] == '\0') {
     fprintf(stderr, "invalid buffer\n");
@@ -151,28 +109,26 @@ void transpose(char* buf, FILE* out, char delim)
 }
 
 static
-struct Buf init_buf(const char* file_name, size_t buf_size)
+struct RowTop* prepare_buf(struct Buf* buf)
 {
-  struct Buf buf = {};
-  if (buf_size != 0) {
-    buf.data = malloc(buf_size);
-    buf.size = buf_size;
-  } else {
-    size_t size = get_file_size(file_name) + 1;
-    buf.data = malloc(size);
-    buf.size = size;
-    fprintf(stderr, "buf isze %lu\n", buf.size);
-  }
+  char* p = buf->data;
+  struct RowTop* rt = init_rowtop(10);
+  push_rowtop(rt, p);
 
-  if (!buf.data) {
-    fprintf(stderr, "malloc error\n");
-    exit(-1);
+  while (*p != '\0') {
+    if (*p == '\n' || *p == '\r') {
+      *p = '\0';
+      if (*(p + 1) != '\0') {
+        push_rowtop(rt, p + 1);
+      }
+    }
+    ++p;
   }
-  return buf;
+  return rt;
 }
 
 static
-int start_transpose(const char* file_name, struct Buf buf)
+int start_transpose(const char* file_name, struct Buf* buf)
 {
   FILE* fp = fopen(file_name, "rb");
   if (!fp) {
@@ -181,16 +137,18 @@ int start_transpose(const char* file_name, struct Buf buf)
   }
 
   while (!feof(fp)) {
-    size_t n = fread(buf.data, sizeof(char), buf.size, fp);
+    size_t n = fread(buf->data, sizeof(char), buf->size, fp);
     if (ferror(fp)) {
       perror("fread");
       fclose(fp);
       return -1;
     }
-    fprintf(stderr, "read isze %lu\n", n);
 
-    buf.data[n + 1] = '\0';
-    transpose(buf.data, stdout, '\t');
+    buf->data[n + 1] = '\0';
+    struct RowTop* rt = prepare_buf(buf);
+    transpose(buf->data, rt, stdout, '\t');
+    free_rowtop(rt);
+    rt = NULL;
   }
   fclose(fp);
   return 0;
@@ -221,7 +179,7 @@ int main(int argc, char** argv)
 {
   struct Opt opt = parse_opt(argc, argv);
   struct Buf buf = init_buf(opt.file_name, opt.buf_size);
-  int status = start_transpose(opt.file_name, buf);
-  free(buf.data);
+  int status = start_transpose(opt.file_name, &buf);
+  free_buf(&buf);
   return status;
 }
