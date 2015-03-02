@@ -1,9 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #include "../rowtop.h"
 #include "../buf.h"
 #include "../util.h"
+#include "../opt.h"
+#include "../transpose.h"
 
 void test_buf()
 {
@@ -71,12 +75,75 @@ void test_util()
   }
 }
 
+void test_opt()
+{
+  { // parse opt
+    struct Opt opt = {};
+    char* argv[7] = {
+      "",
+      "--file",
+      "hoge",
+      "--buf",
+      "10"
+    };
+    assert(parse_opt(5, argv, &opt));
+    assert(strcmp(opt.file_name, "hoge") == 0);
+    assert(opt.buf_size == 10);
+  }
+
+  { // empty opt
+    struct Opt opt = {};
+    char* argv[1] = {
+      "",
+    };
+    assert(!parse_opt(1, argv, &opt));
+    assert(opt.file_name == NULL);
+    assert(opt.buf_size == 0);
+  }
+
+  { // invalid opt
+    struct Opt opt = {};
+    char* argv[7] = {
+      "",
+      "--file",
+    };
+    assert(!parse_opt(2, argv, &opt));
+    assert(opt.file_name == NULL);
+    assert(opt.buf_size == 0);
+  }
+}
+
+void test_transpose()
+{
+  { // space separete
+    char* str = "0 1 2 3 4 5 6 A A G T";
+    assert(count_column(str) == 9);
+  }
+
+  { // tab separete
+    char* str = "0\t1\t2\t3\t4\t5\t6\tA A\tG T";
+    assert(count_column(str) == 9);
+  }
+
+  { // multiple space separete
+    char* str = "0  1  2  3  4 5 6  A A G T";
+    assert(count_column(str) == 9);
+  }
+
+  { // multiple tab separete
+    char* str = "0\t\t1\t\t2\t\t3\t\t4\t\t5\t\t6\t\tA A\tG T";
+    assert(count_column(str) == 9);
+  }
+}
+
 int main(void)
 {
   fprintf(stderr, "start test\n");
   test_buf();
   test_rowtop();
   test_util();
+  test_opt();
+  test_transpose();
   fprintf(stderr, "end test\n");
   return 0;
 }
