@@ -1,7 +1,9 @@
-.PHONY: clean test
+.PHONY: clean, test
 
-TARGET = pt
+TARGET = dotest 
 SRCS = $(wildcard *.c)
+EXCLUDE = ../main.c
+SRCS += $(filter-out $(EXCLUDE),$(wildcard ../*.c))
 OBJS = $(SRCS:.c=.o)
 DEPS = $(OBJS:.o=.d)
 CFLAGS = -std=c99 -g -Wall -Wextra -MMD -MP \
@@ -18,15 +20,14 @@ CFLAGS = -std=c99 -g -Wall -Wextra -MMD -MP \
 
 LDFLAGS =
 INCLUDE =
-OPT = -O2
 
-all: $(TARGET)
+all: test
 
 $(TARGET): $(OBJS)
-		$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-test:
-	cd test && make test
+test: $(TARGET)
+	./$(TARGET)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPT) -o $@ -c $<
