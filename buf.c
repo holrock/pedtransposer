@@ -17,8 +17,6 @@ struct Buf init_buf(const char* file_name, size_t buf_size)
     buf.size = size;
   }
 
-  if (!buf.data) {
-  }
   return buf;
 }
 
