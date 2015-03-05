@@ -5,7 +5,7 @@
 #include <ctype.h>
 
 struct Buf;
-int transpose_ped(FILE* input, FILE* output, struct Buf* buf);
+int transpose_ped(FILE* input, FILE* output, struct Buf* buf, char delim);
 
 // for test
 size_t count_column(const char* buf);

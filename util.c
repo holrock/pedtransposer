@@ -21,7 +21,7 @@ unsigned long xstrtoul(const char* s)
   }
 
   if (endp == s) {
-    fprintf(stderr, "strtoul error: %s\n", s);
+    fprintf(stderr, "xstrtoul: strtoul error: %s\n", s);
     exit(-1);
   }
   return val;
@@ -35,7 +35,7 @@ size_t get_file_size(const char* s)
     exit(-1);
   }
   if (st.st_size < 1) {
-    fprintf(stderr, "invalid file size\n");
+    fprintf(stderr, "get_file_size: invalid file size\n");
     exit(-1);
   }
   return (size_t)st.st_size;
@@ -45,7 +45,7 @@ void* xmalloc(size_t size)
 {
   void* p = malloc(size);
   if (!p) {
-    fprintf(stderr, "malloc error\n");
+    fprintf(stderr, "xmalloc: malloc error\n");
     exit(-1);
   }
   return p;

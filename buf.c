@@ -53,7 +53,7 @@ bool mark_rest_point(struct Buf* buf, size_t read_size)
   }
   // filled all buffer and missing '\n'
   if (i == 0 && buf->cap == read_size + 1) {
-    fprintf(stderr, "can't read one line, buffer size too small\n");
+    fprintf(stderr, "mark_rest_point: can't read one line, buffer size is too small\n");
     return false;
   }
   return true;
@@ -62,7 +62,7 @@ bool mark_rest_point(struct Buf* buf, size_t read_size)
 bool read_next(struct Buf* buf, FILE* fp)
 {
   if (!buf || buf->cap == 0) {
-    fprintf(stderr, "uninitialized buffer\n");
+    fprintf(stderr, "read_next: uninitialized buffer\n");
     return false;
   }
 

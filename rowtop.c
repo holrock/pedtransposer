@@ -18,7 +18,7 @@ void grow_rowtop(struct RowTop* rt)
 {
   char** p = realloc(rt->top, sizeof(char*) * (rt->cap * 2));
   if (!p) {
-    fprintf(stderr, "realloc error\n");
+    fprintf(stderr, "grow_rowtop: ealloc error\n");
     exit(-1);
   }
   rt->top = p;

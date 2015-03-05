@@ -1,9 +1,12 @@
 #include "transpose.h"
 
+#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "buf.h"
 #include "rowtop.h"
+#include "util.h"
 
 const int N_COL_HEADER = 6;
 
@@ -50,15 +53,10 @@ size_t count_column(const char* buf)
 }
 
 static
-void transpose(char* buf, struct RowTop* rt, FILE* out, char delim)
+int transpose(struct RowTop* rt, FILE* out, char delim)
 {
-  if (!buf || buf[0] == '\0') {
-    fprintf(stderr, "invalid buffer\n");
-    return;
-  }
-
   const size_t row_size = rt->size;
-  const size_t ncol = count_column(buf);
+  const size_t ncol = count_column(rt->top[0]);
 
   for (size_t cur_col = 0; cur_col < N_COL_HEADER; ++cur_col) {
     for (size_t i = 0; i < row_size; ++i) {
@@ -95,6 +93,7 @@ void transpose(char* buf, struct RowTop* rt, FILE* out, char delim)
     }
     fputc('\n', out);
   }
+  return 0;
 }
 
 static
@@ -120,48 +119,123 @@ struct RowTop* prepare_buf(struct Buf* buf)
 }
 
 static
-int transpose_one(FILE* input, FILE* output, struct Buf* buf)
+int transpose_one(FILE* input, FILE* output, struct Buf* buf, char delim)
 {
   if (!read_next(buf, input)) {
-    return false;
+    return -1;
   }
 
   struct RowTop* rt = prepare_buf(buf);
-  transpose(buf->data, rt, output, '\t');
+  transpose(rt, output, delim);
   free_rowtop(rt);
-  rt = NULL;
   return 0;
 }
 
 static
-int transpose_multi(FILE* input, FILE* output, struct Buf* buf)
+int merge_multi_files(FILE* output, FILE** tmpfiles, size_t ntmpfiles)
 {
-  while (!feof(input)) {
-    if (!read_next(buf, input)) {
-      return false;
+  for (size_t i = 0; i < ntmpfiles; ++i) {
+    if (fseek(tmpfiles[i], 0L, SEEK_SET) != 0) {
+      perror("fseek");
+      return -1;
     }
-
-    struct RowTop* rt = prepare_buf(buf);
-    transpose(buf->data, rt, output, '\t');
-    free_rowtop(rt);
-    rt = NULL;
   }
-  return 0;
+
+  char* buf = NULL;
+  size_t nbuf = 0;
+  int ret = 0;
+  for (;;) {
+    for (size_t i = 0; i < ntmpfiles; ++i) {
+      ssize_t n = getline(&buf, &nbuf, tmpfiles[i]);
+      if (n < 0) {
+        if (errno != 0) {
+          ret = -1;
+          perror("getline");
+        }
+        goto EXIT;
+      }
+      buf[n-1] = '\0';
+      fputs(buf, output);
+      if (i == ntmpfiles - 1) {
+        fputc('\n', output);
+      } else {
+        fputc('\t', output);
+      }
+    }
+  }
+
+  for (size_t i = 0; i < ntmpfiles; ++i) {
+    if (!feof(tmpfiles[i])) {
+      fprintf(stderr, "move_forward_rest_data: different temp file size\n");
+    }
+  }
+EXIT:
+  free(buf);
+  return ret;
 }
 
-int transpose_ped(FILE* input, FILE* output, struct Buf* buf)
+static
+int transpose_multi(FILE* input, FILE* output, struct Buf* buf, char delim)
+{
+  size_t alloc_size = 10;
+  FILE** tmpfiles = xmalloc(sizeof(FILE*) * alloc_size);
+  size_t current_tmp = 0;
+  int ret = 0;
+
+  while (!feof(input)) {
+    if (!read_next(buf, input)) {
+      ret = -1;
+      goto EXIT;
+    }
+
+    tmpfiles[current_tmp] = tmpfile();
+    if (!tmpfiles[current_tmp]) {
+      perror("tmpfile");
+      ret = -1;
+      goto EXIT;
+    }
+    struct RowTop* rt = prepare_buf(buf);
+    int r = transpose(rt, tmpfiles[current_tmp], delim);
+    free_rowtop(rt);
+    ++current_tmp;
+    if (r != 0) {
+      ret = r;
+      goto EXIT;
+    }
+    if (current_tmp > alloc_size) {
+      alloc_size += 10;
+      FILE** fs = realloc(tmpfiles, alloc_size);
+      if (!fs) {
+        ret = -1;
+        goto EXIT;
+      }
+      tmpfiles = fs;
+    }
+  }
+  
+  ret =  merge_multi_files(output, tmpfiles, current_tmp);
+
+EXIT:
+  for (size_t i = 0; i < current_tmp; ++i) {
+    fclose(tmpfiles[i]);
+  }
+  free(tmpfiles);
+  return ret;
+}
+
+int transpose_ped(FILE* input, FILE* output, struct Buf* buf, char delim)
 {
   if (!input || !output) {
-    fprintf(stderr, "invalid FILE*\n");
+    fprintf(stderr, "transpose_ped: invalid FILE*\n");
     return -1;
   }
   if (!buf) {
-    fprintf(stderr, "invalid buffer\n");
+    fprintf(stderr, "transpose_ped: invalid buffer\n");
     return -1;
   }
 
   if (buf->file_size < buf->cap) {
-    return transpose_one(input, output, buf);
+    return transpose_one(input, output, buf, delim);
   }
-  return transpose_multi(input, output, buf);
+  return transpose_multi(input, output, buf, delim);
 }
