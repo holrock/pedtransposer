@@ -28,3 +28,13 @@ A A     T T     G G
 G G     A C     C T
 A C     0 1     1 0
 ```
+
+## option
+
+```
+./pt: --file --out [--buf]  [--space]
+	--file	input ped file path
+	--out	output ped file path
+	--buf	limit buffer size(MiB). default: allocate input file size
+	--space	output delimite space. default: tab
+```
