@@ -12,26 +12,26 @@
 void test_buf()
 {
   { // set buf size
-    struct Buf buf = init_buf("", 10);
-    assert(buf.size == 10);
-    assert(buf.data);
-    assert(!buf.rest_point);
-    free_buf(&buf);
+    struct Buf* buf = init_buf("", 10);
+    assert(buf->size == 10);
+    assert(buf->data);
+    assert(!buf->rest_point);
+    free_buf(buf);
   }
 
   { // size form file
     // file size + 1 byte
-    struct Buf buf = init_buf("data/buf.data", 0);
-    assert(buf.size == 6);
-    assert(buf.data);
-    free_buf(&buf);
+    struct Buf* buf = init_buf("data/buf.data", 0);
+    assert(buf->size == 6);
+    assert(buf->data);
+    free_buf(buf);
   }
 
   { // set both param
-    struct Buf buf = init_buf("data/buf.data", 100);
-    assert(buf.size == 100);
-    assert(buf.data);
-    free_buf(&buf);
+    struct Buf* buf = init_buf("data/buf.data", 100);
+    assert(buf->size == 100);
+    assert(buf->data);
+    free_buf(buf);
   }
 }
 

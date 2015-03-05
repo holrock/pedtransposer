@@ -12,7 +12,7 @@ struct Buf
   char* rest_point;
 };
 
-struct Buf init_buf(const char* file_name, size_t buf_size);
+struct Buf* init_buf(const char* file_name, size_t buf_size);
 bool read_next(struct Buf* buf, FILE* fp);
 void free_buf(struct Buf* buf);
 

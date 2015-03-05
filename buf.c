@@ -5,16 +5,20 @@
 
 #include "util.h"
 
-struct Buf init_buf(const char* file_name, size_t buf_size)
+struct Buf* init_buf(const char* file_name, size_t buf_size)
 {
-  struct Buf buf = {};
+  struct Buf* buf = xmalloc(sizeof(struct Buf));
+  buf->data = NULL;
+  buf->size = 0;
+  buf->rest_point = NULL;
+
   if (buf_size != 0) {
-    buf.data = xmalloc(buf_size);
-    buf.size = buf_size;
+    buf->data = xmalloc(buf_size);
+    buf->size = buf_size;
   } else {
     size_t size = get_file_size(file_name) + 1;
-    buf.data = xmalloc(size);
-    buf.size = size;
+    buf->data = xmalloc(size);
+    buf->size = size;
   }
 
   return buf;
@@ -62,7 +66,8 @@ bool read_next(struct Buf* buf, FILE* fp)
 void free_buf(struct Buf* buf)
 {
   free(buf->data);
-  buf->size = 0;
   buf->data = NULL;
+  buf->size = 0;
   buf->rest_point = NULL;
+  free(buf);
 }

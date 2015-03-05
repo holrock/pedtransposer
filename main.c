@@ -15,8 +15,9 @@ int main(int argc, char** argv)
   if (!parse_opt(argc, argv, &opt)) {
     exit(-1);
   }
-  struct Buf buf = init_buf(opt.file_name, opt.buf_size);
-  int status = transpose_ped(opt.file_name, &buf);
-  free_buf(&buf);
+  struct Buf* buf = init_buf(opt.file_name, opt.buf_size);
+  int status = transpose_ped(opt.file_name, buf);
+  free_buf(buf);
+  buf = NULL;
   return status;
 }
