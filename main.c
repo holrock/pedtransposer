@@ -29,8 +29,13 @@ int main(int argc, char** argv)
     perror("fopen");
     return -1;
   }
+  FILE* out = fopen(opt.out_name, "wb");
+  if (!out) {
+    perror("fopen");
+    return -1;
+  }
 
-  int status = transpose_ped(fp, stdout, buf, '\t');
+  int status = transpose_ped(fp, out, buf, opt.delim);
 
   fclose(fp);
   free_buf(buf);

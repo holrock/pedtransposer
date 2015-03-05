@@ -132,7 +132,7 @@ int transpose_one(FILE* input, FILE* output, struct Buf* buf, char delim)
 }
 
 static
-int merge_multi_files(FILE* output, FILE** tmpfiles, size_t ntmpfiles)
+int merge_multi_files(FILE* output, FILE** tmpfiles, size_t ntmpfiles, char delim)
 {
   for (size_t i = 0; i < ntmpfiles; ++i) {
     if (fseek(tmpfiles[i], 0L, SEEK_SET) != 0) {
@@ -149,8 +149,8 @@ int merge_multi_files(FILE* output, FILE** tmpfiles, size_t ntmpfiles)
       ssize_t n = getline(&buf, &nbuf, tmpfiles[i]);
       if (n < 0) {
         if (errno != 0) {
-          ret = -1;
           perror("getline");
+          ret = -1;
         }
         goto EXIT;
       }
@@ -159,7 +159,7 @@ int merge_multi_files(FILE* output, FILE** tmpfiles, size_t ntmpfiles)
       if (i == ntmpfiles - 1) {
         fputc('\n', output);
       } else {
-        fputc('\t', output);
+        fputc(delim, output);
       }
     }
   }
@@ -169,6 +169,7 @@ int merge_multi_files(FILE* output, FILE** tmpfiles, size_t ntmpfiles)
       fprintf(stderr, "move_forward_rest_data: different temp file size\n");
     }
   }
+
 EXIT:
   free(buf);
   return ret;
@@ -213,7 +214,7 @@ int transpose_multi(FILE* input, FILE* output, struct Buf* buf, char delim)
     }
   }
   
-  ret =  merge_multi_files(output, tmpfiles, current_tmp);
+  ret =  merge_multi_files(output, tmpfiles, current_tmp, delim);
 
 EXIT:
   for (size_t i = 0; i < current_tmp; ++i) {
