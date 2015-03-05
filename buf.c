@@ -2,24 +2,38 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "util.h"
 
 struct Buf* init_buf(size_t buf_size, size_t file_size)
 {
   struct Buf* buf = NULL;
+  const size_t nul_size = sizeof(char); // size of '\0'
 
   if (buf_size != 0) {
     buf = xmalloc(sizeof(struct Buf) + sizeof(char) * buf_size);
-    buf->size = buf_size;
+    buf->cap = buf_size;
   } else {
-    buf = xmalloc(sizeof(struct Buf) + sizeof(char) * (file_size + sizeof('\0')));
-    buf->size = file_size + 1;
+    buf = xmalloc(sizeof(struct Buf) + sizeof(char) * (file_size + nul_size));
+    buf->cap = file_size + nul_size;
   }
   buf->file_size = file_size;
   buf->rest_point = NULL;
 
   return buf;
+}
+
+static
+size_t move_forward_rest_data(struct Buf* buf)
+{
+  if (!buf->rest_point) {
+    return 0;
+  }
+  size_t nrest = strlen(buf->rest_point);
+  memcpy(buf->data, buf->rest_point, nrest);
+  buf->rest_point = NULL;
+  return nrest;
 }
 
 static
@@ -37,8 +51,9 @@ bool mark_rest_point(struct Buf* buf, size_t read_size)
       break;
     }
   }
-  if (i == 0) {
-    fprintf(stderr, "buffer size too small\n");
+  // filled all buffer and missing '\n'
+  if (i == 0 && buf->cap == read_size + 1) {
+    fprintf(stderr, "can't read one line, buffer size too small\n");
     return false;
   }
   return true;
@@ -46,19 +61,23 @@ bool mark_rest_point(struct Buf* buf, size_t read_size)
 
 bool read_next(struct Buf* buf, FILE* fp)
 {
-  if (!buf || buf->size == 0) {
+  if (!buf || buf->cap == 0) {
     fprintf(stderr, "uninitialized buffer\n");
     return false;
   }
 
-  size_t n = fread(buf->data, sizeof(char), buf->size, fp);
+  size_t nmoved = move_forward_rest_data(buf);
+  char* p = buf->data + nmoved;
+  size_t read_size =  buf->cap - 1 - nmoved;
+
+  size_t n = fread(p, sizeof(char), read_size, fp);
   if (ferror(fp)) {
     perror("fread");
     fclose(fp);
     return false;
   }
-  buf->data[n + 1] = '\0';
-  return mark_rest_point(buf, n + 1);
+  p[n] = '\0';
+  return mark_rest_point(buf, n);
 }
 
 void free_buf(struct Buf* buf)

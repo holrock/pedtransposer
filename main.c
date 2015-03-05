@@ -26,10 +26,9 @@ int main(int argc, char** argv)
   size_t file_size = get_file_size(opt.file_name);
   struct Buf* buf = init_buf(opt.buf_size, file_size);
 
-  int status = transpose_ped(fp, buf);
+  int status = transpose_ped(fp, stdout, buf);
 
   fclose(fp);
   free_buf(buf);
-  buf = NULL;
   return status;
 }

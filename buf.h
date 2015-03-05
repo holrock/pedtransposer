@@ -7,7 +7,7 @@
 
 struct Buf
 {
-  size_t size;
+  size_t cap;
   size_t file_size;
   char* rest_point;
   char data[];

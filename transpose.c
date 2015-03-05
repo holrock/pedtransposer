@@ -120,20 +120,48 @@ struct RowTop* prepare_buf(struct Buf* buf)
 }
 
 static
-int transpose_one(FILE* input, struct Buf* buf)
+int transpose_one(FILE* input, FILE* output, struct Buf* buf)
 {
   if (!read_next(buf, input)) {
     return false;
   }
 
   struct RowTop* rt = prepare_buf(buf);
-  transpose(buf->data, rt, stdout, '\t');
+  transpose(buf->data, rt, output, '\t');
   free_rowtop(rt);
   rt = NULL;
   return 0;
 }
 
-int transpose_ped(FILE* input, struct Buf* buf)
+static
+int transpose_multi(FILE* input, FILE* output, struct Buf* buf)
 {
-  return transpose_one(input, buf);
+  while (!feof(input)) {
+    if (!read_next(buf, input)) {
+      return false;
+    }
+
+    struct RowTop* rt = prepare_buf(buf);
+    transpose(buf->data, rt, output, '\t');
+    free_rowtop(rt);
+    rt = NULL;
+  }
+  return 0;
+}
+
+int transpose_ped(FILE* input, FILE* output, struct Buf* buf)
+{
+  if (!input || !output) {
+    fprintf(stderr, "invalid FILE*\n");
+    return -1;
+  }
+  if (!buf) {
+    fprintf(stderr, "invalid buffer\n");
+    return -1;
+  }
+
+  if (buf->file_size < buf->cap) {
+    return transpose_one(input, output, buf);
+  }
+  return transpose_multi(input, output, buf);
 }
