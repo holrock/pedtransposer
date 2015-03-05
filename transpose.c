@@ -1,6 +1,5 @@
 #include "transpose.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #include "buf.h"
@@ -120,15 +119,10 @@ struct RowTop* prepare_buf(struct Buf* buf)
   return rt;
 }
 
-int transpose_ped(const char* file_name, struct Buf* buf)
+static
+int transpose_one(FILE* input, struct Buf* buf)
 {
-  FILE* fp = fopen(file_name, "rb");
-  if (!fp) {
-    perror("fopen");
-    return -1;
-  }
-
-  if (!read_next(buf, fp)) {
+  if (!read_next(buf, input)) {
     return false;
   }
 
@@ -136,7 +130,10 @@ int transpose_ped(const char* file_name, struct Buf* buf)
   transpose(buf->data, rt, stdout, '\t');
   free_rowtop(rt);
   rt = NULL;
-  fclose(fp);
   return 0;
 }
 
+int transpose_ped(FILE* input, struct Buf* buf)
+{
+  return transpose_one(input, buf);
+}
