@@ -106,8 +106,11 @@ struct RowTop* prepare_buf(struct Buf* buf)
   push_rowtop(rt, p);
 
   while (*p != '\0') {
-    if (*p == '\n' || *p == '\r') {
+    if (*p == '\n') {
       *p = '\0';
+      if (*(p - 1) == '\r') {
+        *(p - 1) = '\0';
+      }
       if (*(p + 1) != '\0') {
         push_rowtop(rt, p + 1);
       }
@@ -125,20 +128,14 @@ int transpose_ped(const char* file_name, struct Buf* buf)
     return -1;
   }
 
-  while (!feof(fp)) {
-    size_t n = fread(buf->data, sizeof(char), buf->size, fp);
-    if (ferror(fp)) {
-      perror("fread");
-      fclose(fp);
-      return -1;
-    }
-    buf->data[n + 1] = '\0';
-
-    struct RowTop* rt = prepare_buf(buf);
-    transpose(buf->data, rt, stdout, '\t');
-    free_rowtop(rt);
-    rt = NULL;
+  if (!read_next(buf, fp)) {
+    return false;
   }
+
+  struct RowTop* rt = prepare_buf(buf);
+  transpose(buf->data, rt, stdout, '\t');
+  free_rowtop(rt);
+  rt = NULL;
   fclose(fp);
   return 0;
 }

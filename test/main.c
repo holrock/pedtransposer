@@ -15,6 +15,7 @@ void test_buf()
     struct Buf buf = init_buf("", 10);
     assert(buf.size == 10);
     assert(buf.data);
+    assert(!buf.rest_point);
     free_buf(&buf);
   }
 
