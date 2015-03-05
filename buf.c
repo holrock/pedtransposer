@@ -73,7 +73,6 @@ bool read_next(struct Buf* buf, FILE* fp)
   size_t n = fread(p, sizeof(char), read_size, fp);
   if (ferror(fp)) {
     perror("fread");
-    fclose(fp);
     return false;
   }
   p[n] = '\0';
