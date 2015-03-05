@@ -8,6 +8,7 @@
 #include "buf.h"
 #include "opt.h"
 #include "transpose.h"
+#include "util.h"
 
 int main(int argc, char** argv)
 {
@@ -15,7 +16,9 @@ int main(int argc, char** argv)
   if (!parse_opt(argc, argv, &opt)) {
     exit(-1);
   }
-  struct Buf* buf = init_buf(opt.file_name, opt.buf_size);
+
+  size_t file_size = get_file_size(opt.file_name);
+  struct Buf* buf = init_buf(opt.buf_size, file_size);
   int status = transpose_ped(opt.file_name, buf);
   free_buf(buf);
   buf = NULL;
