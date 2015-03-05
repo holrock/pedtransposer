@@ -35,8 +35,8 @@ bool parse_opt(int argc, char** argv, struct Opt* opt)
       fprintf(stderr, "%s: --file --out [--buf]  [--space]\n", argv[0]);
       fprintf(stderr, "\t--file\tinput ped file path\n");
       fprintf(stderr, "\t--out\toutput ped file path\n");
-      fprintf(stderr, "\t--buf\tlimit buffer size(MiB). default input file size allocated\n");
-      fprintf(stderr, "\t--space\toutput delimite space. default tab delimited\n");
+      fprintf(stderr, "\t--buf\tlimit buffer size(MiB). default: allocate input file size\n");
+      fprintf(stderr, "\t--space\toutput delimite space. default: tab\n");
       exit(-1);
     }
   }
@@ -46,7 +46,7 @@ bool parse_opt(int argc, char** argv, struct Opt* opt)
   }
   opt->file_name = fname;
   opt->out_name = out;
-  opt->buf_size = bsize;
+  opt->buf_size = bsize * 1024 * 1024;
   opt->delim = delim;
   return true;
 }
