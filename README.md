@@ -38,3 +38,5 @@ A C     0 1     1 0
 	--buf	limit buffer size(MiB). default: allocate input file size
 	--space	output delimite space. default: tab
 ```
+
+If input file is pipe(e.g. /dev/stdin), it should set buffer size.
