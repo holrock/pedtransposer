@@ -25,8 +25,8 @@ int main(int argc, char** argv)
     fprintf(stderr, "warn: buffer size is small. uses a lot of temporary files, the program will be very slow.\n");
   }
 
-  FILE* fp = fopen(opt.file_name, "rb");
-  if (!fp) {
+  FILE* input = fopen(opt.file_name, "rb");
+  if (!input) {
     perror("fopen");
     return -1;
   }
@@ -36,9 +36,10 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  int status = transpose_ped(fp, out, buf, opt.delim);
+  int status = transpose_ped(input, out, buf, opt.delim);
 
-  fclose(fp);
+  fclose(input);
+  fclose(out);
   free_buf(buf);
   return status;
 }
