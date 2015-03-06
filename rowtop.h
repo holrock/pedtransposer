@@ -1,7 +1,7 @@
 #ifndef ROWTOP_H_
 #define ROWTOP_H_
 
-#include <ctype.h>
+#include <stddef.h>
 
 struct RowTop
 {

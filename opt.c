@@ -40,13 +40,14 @@ bool parse_opt(int argc, char** argv, struct Opt* opt)
       exit(-1);
     }
   }
+  opt->file_name = fname;
+  opt->out_name = out;
+  opt->buf_size = bsize;
+  opt->delim = delim;
+
   if (!fname || !out) {
     fprintf(stderr, "empty file name\n");
     return false;
   }
-  opt->file_name = fname;
-  opt->out_name = out;
-  opt->buf_size = bsize * 1024 * 1024;
-  opt->delim = delim;
   return true;
 }

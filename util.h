@@ -1,7 +1,7 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-#include <ctype.h>
+#include <stddef.h>
 
 unsigned long xstrtoul(const char* s);
 size_t get_file_size(const char* s);

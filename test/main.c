@@ -82,38 +82,47 @@ void test_util()
 void test_opt()
 {
   { // parse opt
-    struct Opt opt = {};
-    char* argv[7] = {
+    struct Opt opt;
+    char* argv[10] = {
       "",
       "--file",
       "hoge",
       "--buf",
-      "10"
+      "10",
+      "--out",
+      "foo",
+      "--space",
     };
-    assert(parse_opt(5, argv, &opt));
+    assert(parse_opt(8, argv, &opt));
     assert(strcmp(opt.file_name, "hoge") == 0);
+    assert(strcmp(opt.out_name, "foo") == 0);
     assert(opt.buf_size == 10);
+    assert(opt.delim == ' ');
   }
 
   { // empty opt
-    struct Opt opt = {};
+    struct Opt opt;
     char* argv[1] = {
       "",
     };
     assert(!parse_opt(1, argv, &opt));
     assert(opt.file_name == NULL);
+    assert(opt.out_name == NULL);
     assert(opt.buf_size == 0);
+    assert(opt.delim == '\t');
   }
 
   { // invalid opt
-    struct Opt opt = {};
+    struct Opt opt;
     char* argv[7] = {
       "",
       "--file",
     };
     assert(!parse_opt(2, argv, &opt));
     assert(opt.file_name == NULL);
+    assert(opt.out_name == NULL);
     assert(opt.buf_size == 0);
+    assert(opt.delim == '\t');
   }
 }
 

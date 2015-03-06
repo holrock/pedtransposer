@@ -1,14 +1,19 @@
+#if defined(__GNUC__)
+#define _GNU_SOURCE
+#endif
+
 #include "transpose.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
 
 #include "buf.h"
 #include "rowtop.h"
 #include "util.h"
 
-const int N_COL_HEADER = 6;
+const size_t N_COL_HEADER = 6;
 
 size_t count_column(const char* buf)
 {

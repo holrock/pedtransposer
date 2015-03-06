@@ -12,11 +12,12 @@
 
 int main(int argc, char** argv)
 {
-  struct Opt opt = {};
+  struct Opt opt = {NULL, NULL, 0, '\t'};
   if (!parse_opt(argc, argv, &opt)) {
     exit(-1);
   }
 
+  opt.buf_size = opt.buf_size * 1024 * 1024;
   size_t file_size = get_file_size(opt.file_name);
   struct Buf* buf = init_buf(opt.buf_size, file_size);
 

@@ -9,7 +9,7 @@ CFLAGS = -std=c99 -g -Wall -Wextra -MMD -MP \
 	-Wstrict-aliasing=2 -Wdisabled-optimization \
 	-Wfloat-equal \
 	-Wpointer-arith \
-	-Wdeclaration-after-statement \
+	-Wno-declaration-after-statement \
 	-Wbad-function-cast \
 	-Wcast-align \
 	-Wredundant-decls \

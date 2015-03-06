@@ -1,7 +1,7 @@
 #ifndef OPT_H_
 #define OPT_H_
 
-#include <ctype.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 struct Opt

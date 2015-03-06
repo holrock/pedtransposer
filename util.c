@@ -29,7 +29,7 @@ unsigned long xstrtoul(const char* s)
 
 size_t get_file_size(const char* s)
 {
-  struct stat st = {};
+  struct stat st;
   if (stat(s, &st) == -1) {
     perror("stat");
     exit(-1);
